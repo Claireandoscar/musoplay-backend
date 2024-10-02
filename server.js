@@ -17,10 +17,12 @@ const pool = new Pool({
 });
 
 app.get('/test', (req, res) => {
+  console.log('Received request to /test endpoint');
   res.json({ message: 'Backend is working!' });
 });
 
 app.get('/test-db', async (req, res) => {
+  console.log('Received request to /test-db endpoint');
   try {
     const client = await pool.connect();
     const result = await client.query('SELECT NOW()');
@@ -62,7 +64,11 @@ app.post('/submit-email', async (req, res) => {
     res.status(200).send({ message: 'Email submitted successfully!' });
   } catch (error) {
     console.error('Error submitting email:', error);
-    res.status(500).send({ error: 'Database error', details: error.message });
+    if (error.code === '23505') { // Unique violation error code
+      res.status(400).send({ error: 'This email has already been submitted.' });
+    } else {
+      res.status(500).send({ error: 'Database error', details: error.message });
+    }
   }
 });
 
