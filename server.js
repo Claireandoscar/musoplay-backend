@@ -4,10 +4,19 @@ const cors = require('cors');
 const { Pool } = require('pg');
 
 const app = express();
-app.use(bodyParser.json());
+
+// Updated CORS configuration
 app.use(cors({
-  origin: 'https://www.musoplay.com' // Replace with your frontend URL if different
+  origin: ['https://www.musoplay.com', 'https://musoplay.com', 'http://www.musoplay.com', 'http://musoplay.com']
 }));
+
+app.use(bodyParser.json());
+
+// Logging middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} request to ${req.url}`);
+  next();
+});
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -43,6 +52,13 @@ app.post('/submit-email', async (req, res) => {
   if (!email) {
     console.log('No email provided in request');
     return res.status(400).send({ error: 'Email is required' });
+  }
+
+  // Basic email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    console.log('Invalid email format:', email);
+    return res.status(400).send({ error: 'Invalid email format' });
   }
 
   console.log('Attempting to insert email:', email);
